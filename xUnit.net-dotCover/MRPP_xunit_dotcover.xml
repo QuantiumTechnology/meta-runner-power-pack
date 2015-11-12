@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<meta-runner name="xUnit.net + dotCover 💕">
-  <description>Run xUnit.net tests with dotCover coverage: http://www.wwwlicious.com/2015/09/25/teamcity-dotcover-xunit-at-last/</description>
+<meta-runner name="xUnit.net + dotCover 💕"> <description>Run xUnit.net tests with dotCover coverage: http://www.wwwlicious.com/2015/09/25/teamcity-dotcover-xunit-at-last/</description>
   <settings>
     <parameters>
       <param name="xUnitNet.nugetSource" value="http://www.nuget.org/api/v2/" spec="text description='The nuget source url for the xunit runner' display='normal' label='Xunit Runner Nuget Source'" />
@@ -8,9 +7,11 @@
       <param name="xUnitNet.executable.args" value="" spec="text description='Custom xunit runner arguments' display='normal' label='Xunit Runner Executable additional arguments'" />
       <param name="xUnitNet.executable.legacymode" value="false" spec="checkbox checkedValue='true' description='For mixed mode assemblies, enables xunit runner to use legacy activiation' uncheckedValue='false' label='Enable .Net V2 Legacy Activation' display='normal'" />
       <param name="xUnitNet.assembliesPath" value="*/bin/*tests.dll" spec="text description='The assemblies to test; relative to the working directory. Asterix wildcard (*) is supported here' display='normal' label='Assemblies to test:'" />
-	  <param name="xUnitNet.assembliesExclusionPath" value=".*\\obj\\.*" spec="text description='The assemblies to exclude from the test - useful for excluding intermediate build objects; relative to the working directory. Asterix wildcard (*) is supported here' display='normal' label='Assemblies to exclude from test:'" />
+      <param name="xUnitNet.assembliesExclusionPath" value=".*\\obj\\.*" spec="text description='The assemblies to exclude from the test - useful for excluding intermediate build objects; relative to the working directory. Asterix wildcard (*) is supported here' display='normal' label='Assemblies to exclude from test:'" />
       <param name="xUnitNet.trait" value="" spec="text description='only run tests with matching name/value traits, one name=value per line (e.x. name=value)' validationMode='any' label='Include Traits' display='normal'" />
       <param name="xUnitNet.notrait" value="Category=Integration" spec="text description='do not run tests with matching name/value traits, one name=value per line (e.x. name=value)' validationMode='any' label='Exclude Traits' display='normal'" />
+      <param name="xUnitNet.reportName" value="" spec="text description='Report Name to output (leave blank for none)' validationMode='any' label='Report Name' display='normal'" />
+      <param name="xUnitNet.reportType" value="" spec="text description='HTML|JSON|XML|DetailedXML|NDependXML' validationMode='any' label='Report Type' display='normal'" />
       <param name="xUnitNet.dotCover.Filters" spec="text description='Specifies coverage filters using the config format. Documentation http://www.jetbrains.com/dotcover/help/dotCover__Console_Runner_Commands.html' label='dotCover Filters' validationMode='any' display='normal'"><![CDATA[<!-- Coverage filters. It's possible to use asterisks as wildcard symbols. -->
 <Filters>
   <IncludeFilters>
@@ -53,6 +54,8 @@ Param (
     [string] $assemblyFilter = "%xUnitNet.assembliesPath%",
 	[string] $assemblyExclusionFilter = "%xUnitNet.assembliesExclusionPath%",
     [string] $traits = "%xUnitNet.trait%",
+    [string] $reportName = "%xUnitNet.reportName%",
+    [string] $reportType = "%xUnitNet.reportType%",
     [string] $notraits = "%xUnitNet.notrait%",
     [string] $dotCoverFilter = "%xUnitNet.dotCover.Filters%",
     [string] $dotCoverAttributeFilter = "%xUnitNet.dotCover.AttributeFilters%",
@@ -123,7 +126,12 @@ try {
   write-host "##teamcity[publishArtifacts '$settingsFileName']"
   write-host "##teamcity[publishArtifacts '$coverageLogFileName']"
   write-host "##teamcity[publishArtifacts '$outputFile']"
-    
+  
+  if(![string]::IsNullOrEmpty($reportName)){
+   $dotCoverArgs = " report /Source=$outputFile /Output=$reportName /ReportType=$reportType"	
+   $command = $dotCover +  $dotCoverArgs	
+   iex $command
+  } 
 }
 catch {
   
