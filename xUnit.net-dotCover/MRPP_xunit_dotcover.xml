@@ -8,6 +8,7 @@
       <param name="xUnitNet.executable.args" value="" spec="text description='Custom xunit runner arguments' display='normal' label='Xunit Runner Executable additional arguments'" />
       <param name="xUnitNet.executable.legacymode" value="false" spec="checkbox checkedValue='true' description='For mixed mode assemblies, enables xunit runner to use legacy activiation' uncheckedValue='false' label='Enable .Net V2 Legacy Activation' display='normal'" />
       <param name="xUnitNet.assembliesPath" value="*/bin/*tests.dll" spec="text description='The assemblies to test; relative to the working directory. Asterix wildcard (*) is supported here' display='normal' label='Assemblies to test:'" />
+	  <param name="xUnitNet.assembliesExclusionPath" value=".*\\obj\\.*" spec="text description='The assemblies to exclude from the test - useful for excluding intermediate build objects; relative to the working directory. Asterix wildcard (*) is supported here' display='normal' label='Assemblies to exclude from test:'" />
       <param name="xUnitNet.trait" value="" spec="text description='only run tests with matching name/value traits, one name=value per line (e.x. name=value)' validationMode='any' label='Include Traits' display='normal'" />
       <param name="xUnitNet.notrait" value="Category=Integration" spec="text description='do not run tests with matching name/value traits, one name=value per line (e.x. name=value)' validationMode='any' label='Exclude Traits' display='normal'" />
       <param name="xUnitNet.dotCover.Filters" spec="text description='Specifies coverage filters using the config format. Documentation http://www.jetbrains.com/dotcover/help/dotCover__Console_Runner_Commands.html' label='dotCover Filters' validationMode='any' display='normal'"><![CDATA[<!-- Coverage filters. It's possible to use asterisks as wildcard symbols. -->
@@ -50,6 +51,7 @@ Param (
     [string] $dotCoverExecutable = "%teamcity.tool.dotCover%",
     [boolean] $xunitLegacy = [System.Convert]::ToBoolean("%xUnitNet.executable.legacymode%"),
     [string] $assemblyFilter = "%xUnitNet.assembliesPath%",
+	[string] $assemblyExclusionFilter = "%xUnitNet.assembliesExclusionPath%",
     [string] $traits = "%xUnitNet.trait%",
     [string] $notraits = "%xUnitNet.notrait%",
     [string] $dotCoverFilter = "%xUnitNet.dotCover.Filters%",
@@ -74,7 +76,7 @@ try {
   }
 	
   ## Search for the assemblies using wildcard pattern
-  $assemblies = (Get-ChildItem $assemblyFilter -Recurse | select -ExpandProperty FullName)
+  $assemblies = @(gci -Path $workingDir -Filter $assemblyFilter -Recurse | ? { -not ($_.FullName -match $assemblyExclusionFilter)}  | select -ExpandProperty FullName)
   Write-Host "Found test assemblies: " $assemblies
   
   ## create single-line correctly formatted xunit argument 
